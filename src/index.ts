@@ -10,34 +10,54 @@
  *
  * Learn more at https://developers.cloudflare.com/workers/
  */
+import puppeteer from "@cloudflare/puppeteer";
+
+type Message = {
+	url: string;
+};
 
 export interface Env {
 	// Example binding to a Queue. Learn more at https://developers.cloudflare.com/queues/javascript-apis/
-	MY_QUEUE: Queue;
+	MILL: Queue<Message>;
+	BROWSER: Fetcher;
 }
 
 export default {
-	// Our fetch handler is invoked on a HTTP request: we can send a message to a queue
-	// during (or after) a request.
-	// https://developers.cloudflare.com/queues/platform/javascript-apis/#producer
-	async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-		// To send a message on a queue, we need to create the queue first
-		// https://developers.cloudflare.com/queues/get-started/#3-create-a-queue
-		await env.MY_QUEUE.send({
-			url: req.url,
-			method: req.method,
-			headers: Object.fromEntries(req.headers),
+
+	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+		// Return a URL redirect with instructions on how to use this worker
+		return new Response("Redirecting...", {
+			status: 301,
+			headers: {
+				"Location": "https://workers.quacksire.dev/mill"
+			}
 		});
-		return new Response('Sent message to the queue');
 	},
+
 	// The queue handler is invoked when a batch of messages is ready to be delivered
 	// https://developers.cloudflare.com/queues/platform/javascript-apis/#messagebatch
-	async queue(batch: MessageBatch<Error>, env: Env): Promise<void> {
-		// A queue consumer can make requests to other endpoints on the Internet,
-		// write to R2 object storage, query a D1 Database, and much more.
-		for (let message of batch.messages) {
-			// Process each message (we'll just log these)
-			console.log(`message ${message.id} processed: ${JSON.stringify(message.body)}`);
+	async queue(batch: MessageBatch<Message>, env: Env): Promise<void> {
+		let browser: puppeteer.Browser | null = null;
+		try {
+			// @ts-ignore
+			browser = await puppeteer.launch(env.BROWSER);
+		} catch {
+			batch.retryAll();
+			return;
 		}
+
+		for (const message of batch.messages) {
+			const { url } = message.body;
+			const page = await (browser as puppeteer.Browser).newPage();
+
+			// TODO: crawl!
+			await page.goto(url, {
+				waitUntil: "load",
+			});
+
+			message.ack()
+		}
+
+		await browser.close();
 	},
 };

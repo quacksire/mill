@@ -1,6 +1,7 @@
 name = "mill"
 main = "src/index.ts"
 compatibility_date = "2024-04-05"
+node_compat = true
 
 # Variable bindings. These are arbitrary, plaintext strings (similar to environment variables)
 # Note: Use secrets to store sensitive data.
@@ -20,8 +21,8 @@ compatibility_date = "2024-04-05"
 
 # Bind a headless browser instance running on Cloudflare's global network.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#browser-rendering
-# [browser]
-# binding = "MY_BROWSER"
+[browser]
+binding = "BROWSER"
 
 # Bind a D1 database. D1 is Cloudflare’s native serverless SQL database.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#d1-databases
@@ -69,14 +70,14 @@ compatibility_date = "2024-04-05"
 
 # Bind a Queue producer. Use this binding to schedule an arbitrary task that may be processed later by a Queue consumer.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#queues
-[[queues.producers]]
-binding = "MY_QUEUE"
-queue = "my-queue"
+#[[queues.producers]]
+#binding = "MY_QUEUE"
+#queue = "my-queue"
 
 # Bind a Queue consumer. Queue Consumers can retrieve tasks scheduled by Producers to act on them.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#queues
 [[queues.consumers]]
-queue = "my-queue"
+queue = "mill"
 # Optional: Configure batching and retries: https://developers.cloudflare.com/queues/learning/batching-retries/
 # max_batch_size = 10
 # max_batch_timeout = 30
