@@ -50,7 +50,7 @@ export default {
 			const { url } = message.body;
 			const page = await (browser as puppeteer.Browser).newPage();
 
-			// TODO: crawl!
+			// Load the page
 			await page.goto(url, {
 				waitUntil: "load",
 			});
